@@ -1,38 +1,11 @@
-"use client";
-import { useUser } from "@clerk/nextjs";
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+// Server-safe Provider wrapper.
+// Previously this file used client-only hooks (Clerk's useUser) and performed
+// an axios POST on mount. That required this file to be a client component,
+// which can create extra client chunks that sometimes fail to load at runtime.
+// To avoid ChunkLoad errors during client navigation, keep this wrapper server-side
+// and keep it simple. If you need to run client-only checks (like create-user),
+// move that logic into a dedicated client component mounted where necessary.
 
-function Provider({ children }) {
-  const { user, isLoaded } = useUser();
-  const [isChecking, setIsChecking] = useState(false);
-
-  useEffect(() => {
-    if (isLoaded && user) {
-      CheckIsNewUser();
-    }
-  }, [isLoaded, user]);
-
-  const CheckIsNewUser = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress || !user?.fullName) return;
-
-    try {
-      setIsChecking(true);
-      const resp = await axios.post("/api/create-user", {
-        user: {
-          userName: user.fullName, // Match the database field name exactly
-          email: user.primaryEmailAddress.emailAddress,
-        },
-      });
-      console.log("User check/creation successful:", resp.data);
-    } catch (error) {
-      console.error("Error checking/creating user:", error);
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
+export default function Provider({ children }) {
   return <div className="min-h-screen">{children}</div>;
 }
-
-export default Provider;

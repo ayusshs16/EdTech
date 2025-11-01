@@ -4,26 +4,31 @@ import { inngest } from "@/inngest/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
-  const { chapters, courseId, type } = await req.json();
+  const { chapters, courseId, type, sendToInngest = false } = await req.json();
 
   // Handle notes generation differently
   if (type === "notes") {
-    await inngest.send({
-      name: "notes.generate",
-      data: {
-        course: {
-          courseId: courseId,
-          courseLayout: {
-            chapters: chapters.split(",").map((chapterTitle, index) => ({
-              chapterId: index + 1,
-              chapterTitle: chapterTitle.trim(),
-            })),
+    if (sendToInngest) {
+      await inngest.send({
+        name: "notes.generate",
+        data: {
+          course: {
+            courseId: courseId,
+            courseLayout: {
+              chapters: chapters.split(",").map((chapterTitle, index) => ({
+                chapterId: index + 1,
+                chapterTitle: chapterTitle.trim(),
+              })),
+            },
           },
         },
-      },
-    });
+      });
 
-    return NextResponse.json({ message: "Notes generation started" });
+      return NextResponse.json({ message: "Notes generation started" });
+    }
+
+    // If not sending to Inngest, just return that the content was prepared
+    return NextResponse.json({ message: "Notes prepared (Inngest not triggered)" });
   }
 
   // Get the appropriate prompt based on type
@@ -54,19 +59,28 @@ export async function POST(req) {
         id: STUDY_TYPE_CONTENT_TABLE.id,
       });
 
-    await inngest.send({
-      name: "studyType.content",
-      data: {
-        studyType: type,
-        prompt: PROMPT,
-        courseId: courseId,
-        recordId: result[0].id,
-      },
-    });
+    if (sendToInngest) {
+      await inngest.send({
+        name: "studyType.content",
+        data: {
+          studyType: type,
+          prompt: PROMPT,
+          courseId: courseId,
+          recordId: result[0].id,
+        },
+      });
 
+      return NextResponse.json({
+        id: result[0].id,
+        message: `${type} generation started`,
+      });
+    }
+
+    // If not sending to Inngest, just return prepared record id so caller can
+    // display content immediately or choose to trigger background processing later.
     return NextResponse.json({
       id: result[0].id,
-      message: `${type} generation started`,
+      message: `${type} prepared (Inngest not triggered)`,
     });
   } catch (error) {
     console.error(`Error generating ${type}:`, error);

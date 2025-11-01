@@ -1,6 +1,4 @@
 "use client";
-import { UserButton } from "@clerk/nextjs";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -18,18 +16,16 @@ function DashboardHeader() {
         showLogoAndName ? "justify-between" : "justify-end" // Adjust layout based on whether both are shown
       }`}
     >
-      {/* Logo and Name - shown based on screen size and route */}
+      {/* Logo/Text - shown based on screen size and route */}
       {showLogoAndName && (
         <div className="flex items-center space-x-2">
-          <Image src="C:\Users\avira\Downloads\AI-Study-Material-Generator-master\AI-Study-Material-Generator-master\public\logo.jpg" alt="logo" width={100} height={100} />
           <Link href={"/dashboard"}>
             <span className="text-xl md:text-2xl font-bold">PrepGen</span>
           </Link>
         </div>
       )}
 
-      {/* User Button */}
-      <UserButton />
+  {/* User Button is rendered in the global header (app/layout.js). */}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
-import axios from "axios";
 import { useState, useEffect, useContext } from "react";
+import { DUMMY_COURSES } from "@/lib/dummyCourses";
 import CourseCardItem from "./CourseCardItem";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -14,28 +14,41 @@ function CourseList() {
   const { setTotalCourse } = useContext(CourseCountContext);
 
   useEffect(() => {
-    if (isLoaded && user) {
+    if (isLoaded) {
       GetCourseList();
     }
   }, [isLoaded, user]);
 
   const GetCourseList = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) return;
-
+    // Load client-saved courses first (localStorage), then fall back to dummy courses.
     try {
       setLoading(true);
-      const result = await axios.post("/api/courses", {
-        createdBy: user.primaryEmailAddress.emailAddress,
-      });
-      setCourseList(result.data.result || []);
-      setTotalCourse(result.data.result.length);
-    } catch (error) {
-      console.error("Error fetching course list:", error);
+      const saved = typeof window !== "undefined" ? localStorage.getItem("prepgen_local_courses") : null;
+      const parsed = saved ? JSON.parse(saved) : [];
+      // mark locally saved courses so the UI can show delete actions
+      const localParsed = parsed.map((c) => ({ ...c, __local: true }));
+      const combined = [...localParsed, ...DUMMY_COURSES];
+      setCourseList(combined);
+      setTotalCourse(combined.length);
     } finally {
       setLoading(false);
     }
   };
 
+  const deleteLocalCourse = (course) => {
+    try {
+      if (!course) return;
+      const saved = localStorage.getItem("prepgen_local_courses");
+      const parsed = saved ? JSON.parse(saved) : [];
+      // match by courseId (preferred) or id fallback
+      const filtered = parsed.filter((c) => !(c.courseId === course.courseId || c.id === course.id));
+      localStorage.setItem("prepgen_local_courses", JSON.stringify(filtered));
+      // refresh list
+      GetCourseList();
+    } catch (e) {
+      console.error("Failed to delete local course", e);
+    }
+  };
   if (!isLoaded || !user) {
     return (
       <div className="w-full h-[40vh] flex items-center justify-center">
@@ -60,8 +73,12 @@ function CourseList() {
       </h2>
       <div className="grid grid-col-2 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
         {!loading
-          ? courseList?.map((course, index) => (
-              <CourseCardItem course={course} key={course.id || index} />
+              ? courseList?.map((course, index) => (
+              <CourseCardItem
+                course={course}
+                key={course.id || index}
+                onDelete={course.__local ? () => deleteLocalCourse(course) : undefined}
+              />
             ))
           : [1, 2, 3, 4, 5, 6].map((item, index) => (
               <div

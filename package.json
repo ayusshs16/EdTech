@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.3.4",
+    "@clerk/nextjs": "^6.34.1",
     "@google/generative-ai": "^0.21.0",
     "@neondatabase/serverless": "^0.10.3",
     "@radix-ui/react-progress": "^1.1.0",
@@ -30,7 +30,7 @@
     "react-dom": "^18",
     "react-spinners": "^0.15.0",
     "sonner": "^1.7.0",
-    "stripe": "^17.5.0",
+    "stripe": "^19.2.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.0.3"

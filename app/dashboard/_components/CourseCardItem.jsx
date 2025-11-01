@@ -3,9 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
+import TopicPills from "@/components/ui/topicPills";
 
-function CourseCardItem({ course }) {
+function CourseCardItem({ course, onDelete }) {
+  const [showTopics, setShowTopics] = useState(false);
+
+  const extractTopics = () => {
+    const layout = course?.courseLayout || {};
+    if (Array.isArray(layout.topics)) return layout.topics;
+    if (Array.isArray(layout.chapters)) {
+      // chapters may have topics arrays
+      return layout.chapters.flatMap((c) => c.topics || []);
+    }
+    return [];
+  };
   return (
     <div className="border rounded-lg shadow-md p-5">
       <div>
@@ -30,11 +42,38 @@ function CourseCardItem({ course }) {
           {course?.status == "Generating" ? (
             <Button disabled>Generating</Button>
           ) : (
-            <Link href={"/course/" + course?.courseId}>
-              <Button>View</Button>
-            </Link>
+            <>
+              <Button onClick={() => setShowTopics((s) => !s)} className="mr-2">
+                {showTopics ? "Hide Topics" : "Topics"}
+              </Button>
+              <Link href={"/course/" + course?.courseId}>
+                <Button className="mr-2">View</Button>
+              </Link>
+              {onDelete && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (confirm("Delete this locally saved course? This cannot be undone.")) {
+                      onDelete();
+                    }
+                  }}
+                >
+                  Delete
+                </Button>
+              )}
+            </>
           )}
         </div>
+        {showTopics && (
+          <div className="mt-4">
+            <h3 className="font-semibold">Topics</h3>
+            {extractTopics().length > 0 ? (
+              <TopicPills topics={extractTopics()} />
+            ) : (
+              <p className="text-gray-500 mt-2">No topics available yet.</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

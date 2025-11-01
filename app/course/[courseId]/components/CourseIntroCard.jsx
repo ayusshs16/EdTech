@@ -1,6 +1,7 @@
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import React from "react";
+import TopicPills from "@/components/ui/topicPills";
 
 function CourseIntroCard({ course }) {
   return (
@@ -16,6 +17,13 @@ function CourseIntroCard({ course }) {
         <h2 className="mt-3 text-lg text-primary">
           Total Chapters: {course?.courseLayout?.chapters?.length}
         </h2>
+        {/* Topics display */}
+        {course?.courseLayout && (
+          <div>
+            <h3 className="font-semibold mt-3">Topics</h3>
+            <TopicPills topics={course?.courseLayout?.topics || []} />
+          </div>
+        )}
       </div>
     </div>
   );

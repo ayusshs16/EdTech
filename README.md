@@ -35,8 +35,7 @@ The AI Study Material Generator combines AI capabilities with scalable SaaS arch
 
 - **AI-Powered Material Generation**: Uses Gemini AI for generating study materials, quizzes, and summaries.
 - **Secure Authentication**: Powered by Clerk for robust user authentication.
-- **Scalable Serverless Functions**: Inngest enables efficient serverless operations.
-- **Payment Integration**: Stripe supports subscription-based payments for premium users.
+ - **Scalable Serverless Functions**: Inngest enables efficient serverless operations.
 - **Responsive Design**: Built with Tailwind CSS for a seamless UI/UX.
 - **Real-Time Updates**: Fast and efficient updates with Next.js server-side rendering and API routes.
 
@@ -50,6 +49,7 @@ The AI Study Material Generator combines AI capabilities with scalable SaaS arch
 - **AI Integration**: Gemini AI
 - **Authentication**: Clerk
 - **Payments**: Stripe
+ - **Payments**: (disabled)
 - **Serverless Functions**: Inngest
 
 ---
@@ -114,6 +114,7 @@ Before starting, ensure you have the following installed:
 - **User Registration**: Sign up and log in securely using Clerk authentication.
 - **Generate Study Material**: Input topics or upload content to create AI-generated learning materials.
 - **Payments**: Subscribe to premium features using Stripe.
+ - **Payments**: (disabled in this build)
 - **Real-Time Updates**: Enjoy fast, responsive features powered by serverless functions.
 
 ---

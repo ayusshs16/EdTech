@@ -51,7 +51,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { courseId, topic, courseType, difficultyLevel, createdBy } =
+    const { courseId, topic, courseType, difficultyLevel, createdBy, sendToInngest = false } =
       await req.json();
 
     if (!courseId || !topic || !courseType || !difficultyLevel || !createdBy) {
@@ -65,12 +65,14 @@ export async function POST(req) {
     setGenerationStatus(courseId, "generating", null, null);
 
     // Start async generation (don't await - fire and forget)
+    // Pass along whether to trigger Inngest at the end of the generation
     generateCourseAsync(
       courseId,
       topic,
       courseType,
       difficultyLevel,
-      createdBy
+      createdBy,
+      !!sendToInngest
     );
 
     // Return immediately
@@ -97,7 +99,8 @@ async function generateCourseAsync(
   topic,
   courseType,
   difficultyLevel,
-  createdBy
+  createdBy,
+  sendToInngest = false
 ) {
   try {
     console.log(`Starting AI generation for course ${courseId}...`);
@@ -139,18 +142,28 @@ async function generateCourseAsync(
     // Update status to indicate triggering Inngest
     setGenerationStatus(courseId, "triggering-inngest", null, null);
 
-    // Trigger Inngest function to generate chapter notes
-    const inngestResult = await inngest.send({
-      name: "notes.generate",
-      data: {
-        course: dbResult[0].resp,
-      },
-    });
-
-    console.log(
-      `Inngest function triggered for course ${courseId}:`,
-      inngestResult
-    );
+    // Optionally trigger Inngest function to generate chapter notes
+    if (sendToInngest) {
+      try {
+        const inngestResult = await inngest.send({
+          name: "notes.generate",
+          data: {
+            course: dbResult[0].resp,
+          },
+        });
+        console.log(
+          `Inngest function triggered for course ${courseId}:`,
+          inngestResult
+        );
+      } catch (err) {
+        console.warn(
+          `Failed to trigger Inngest for course ${courseId}, continuing:`,
+          err?.message || err
+        );
+      }
+    } else {
+      console.log(`Skipping Inngest trigger for course ${courseId}`);
+    }
 
     // Set completion status with data
     setGenerationStatus(courseId, "completed", dbResult[0], null);

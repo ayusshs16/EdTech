@@ -1,46 +1,10 @@
 import { db } from "@/configs/db";
-import { PAYMENT_RECORD_TABLE, USER_TABLE } from "@/configs/schema";
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 
-export async function POST(req) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  let data;
-  let eventType;
-  // Check if webhook signing is configured.
-  const webhookSecret = process.env.STRIPE_WEB_HOOK_KEY;
-  if (webhookSecret) {
-    // Retrieve the event by verifying the signature using the raw body and secret.
-    let event;
-    let signature = req.headers["stripe-signature"];
-
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        signature,
-        webhookSecret
-      );
-    } catch (err) {
-      console.log(`⚠️  Webhook signature verification failed.`);
-      return res.sendStatus(400);
-    }
-    // Extract the object from the event.
-    data = event.data;
-    eventType = event.type;
-  } else {
-    // Webhook signing is recommended, but if the secret is not configured in `config.js`,
-    // retrieve the event data directly from the request body.
-    data = req.body.data;
-    eventType = req.body.type;
-  }
-
-  switch (eventType) {
-    case "checkout.session.completed":
-      // Payment is successful and the subscription is created.
-      // You should provision the subscription and save the customer ID to your database.
-      const result = await db
-        .update(USER_TABLE)
+// Webhook handler removed — payments are disabled. Keep stub to avoid 404s.
+export async function POST() {
+  return NextResponse.json({ error: "Payments disabled" }, { status: 410 });
+}
         .set({
           isMember: true,
         })
