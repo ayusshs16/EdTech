@@ -1,9 +1,9 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { Outfit } from "next/font/google";
 import Provider from "./provider";
 import { Toaster } from "@/components/ui/sonner";
 import HeaderAuth from "./_components/HeaderAuth";
+import ClientClerkProvider from "./_components/ClientClerkProvider";
 
 export const metadata = {
   title: "PrepGen — Where Preparation Meets Innovation",
@@ -26,17 +26,14 @@ export default function RootLayout({ children }) {
   }
 
   return (
-    <ClerkProvider
-      appearance={{ variables: { colorPrimary: "#2563eb" } }}
-      {...clerkProps}
-    >
-      <html lang="en">
-        <body className={outfit.className}>
+    <html lang="en">
+      <body className={outfit.className}>
+        <ClientClerkProvider {...clerkProps}>
           <HeaderAuth />
           <Provider>{children}</Provider>
           <Toaster />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClientClerkProvider>
+      </body>
+    </html>
   );
 }
