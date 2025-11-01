@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # 📚 AI Study Material Generator
 
@@ -156,3 +157,6 @@ Project Maintainer:
 
 ---
 Feel free to reach out with any questions, ideas, or feedback!
+=======
+# EdTech HackwithUttarPrad 
+>>>>>>> f7a0974f1e09c7bd9e542f7eba3a619cc11b6ea8
