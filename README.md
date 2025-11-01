@@ -1,163 +1,85 @@
-<<<<<<< HEAD
+# PrepGen EdTech Platform
 
-# 📚 AI Study Material Generator
+Next.js powered learning companion that blends AI-generated course content with a subscription sandbox. Use it to experiment with Gemini/OpenAI assisted course generation, local storage fallbacks, and a full Stripe subscription checkout that you can run end-to-end in test mode.
 
-Welcome to the AI Study Material Generator, a cutting-edge SaaS application designed to revolutionize learning by generating personalized study materials using advanced AI technology. Built with the latest web development tools and techniques, this platform is perfect for educators, students, and anyone looking to simplify their learning process.
+## Highlights
 
----
+- **AI tooling** – Generate courses, chapters, flashcards, notes, and quizzes using Gemini and OpenAI backed API routes.
+- **Dashboard-first UX** – Clerk authentication, localStorage course persistence, and polished Tailwind UI components for learners.
+- **Stripe subscription demo** – Custom Checkout flow with Payment + Address Elements mounted inside `/subscribe`, webhook handling, and cancellation helpers.
+- **Serverless friendly** – API routes run in the App Router, with Inngest stubs for local development and optional Neon/Postgres integration.
 
-## 📋 Table of Contents
-- [About the Project](#about-the-project)
-- [Key Features](#key-features)
-- [Technologies Used](#technologies-used)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Contact](#contact)
+## Getting Started
 
----
+1. **Install dependencies**
 
-## 📝 About the Project
-
-The AI Study Material Generator combines AI capabilities with scalable SaaS architecture to provide a seamless learning experience. With advanced AI features powered by Gemini AI, it generates tailored study materials, quizzes, and summaries, making learning effective and efficient. Whether you're an individual learner or a large institution, this platform adapts to your needs.
-
-### Key Goals of the AI Study Material Generator:
-- Simplify the creation of personalized learning materials
-- Enable secure and seamless access to resources
-- Offer a scalable and reliable learning management system
-
----
-
-## ✨ Key Features
-
-- **AI-Powered Material Generation**: Uses Gemini AI for generating study materials, quizzes, and summaries.
-- **Secure Authentication**: Powered by Clerk for robust user authentication.
- - **Scalable Serverless Functions**: Inngest enables efficient serverless operations.
-- **Responsive Design**: Built with Tailwind CSS for a seamless UI/UX.
-- **Real-Time Updates**: Fast and efficient updates with Next.js server-side rendering and API routes.
-
----
-
-## 🛠 Technologies Used
-
-- **Frontend**: React, Next.js, Tailwind CSS
-- **Backend**: Serverless API routes with Next.js
-- **Database**: Neon (PostgreSQL-based serverless database)
-- **AI Integration**: Gemini AI
-- **Authentication**: Clerk
-- **Payments**: Stripe
- - **Payments**: (disabled)
-- **Serverless Functions**: Inngest
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-Before starting, ensure you have the following installed:
-
-- Node.js (v16+)
-- npm or Yarn
-- Stripe account
-- Clerk account
-- Neon database instance
-- Inngest account
-- OpenAI (or Gemini AI) API key
-
-### Installation
-
-1. **Clone the Repository**
-   
-   ```
-   git clone https://github.com/YourUsername/AI-Study-Material-Generator.git
-   cd AI-Study-Material-Generator
-
-2. **Install Dependencies**
-   
-   ```
+   ```bash
+   pnpm install
+   # or
    npm install
- 
-3. **Set Up Environment Variables**
-   
-   Create a .env.local file in the root directory and add the following variables:
+   ```
 
-5. **env**
-   
-    ```
-    NEXT_PUBLIC_CLERK_FRONTEND_API=your_clerk_frontend_api
-    CLERK_API_KEY=your_clerk_api_key
-    STRIPE_SECRET_KEY=your_stripe_secret_key
-    NEON_DATABASE_URL=your_neon_database_url
-    INNGEST_API_KEY=your_inngest_api_key
-    OPENAI_API_KEY=your_openai_api_key
+2. **Copy environment variables**
 
+   ```bash
+   cp .env.example .env.local
+   ```
 
-6. **Run the Application**
-   
-    ```
-    npm run dev
-    ```
+   Populate the Stripe, Clerk, OpenAI/Gemini, database, and Inngest values. At a minimum the Stripe demo needs:
 
-7. **Build for Production**
-   
-    For deploying the app, build the project:
-    ```
-    npm run build
-    ```
----
+   - `STRIPE_SECRET_KEY`
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+   - `STRIPE_PRICE_ID` (recurring price to sell)
+   - `STRIPE_WEBHOOK_SECRET` (from `stripe listen` or Dashboard)
 
-## 📚 Usage
-- **User Registration**: Sign up and log in securely using Clerk authentication.
-- **Generate Study Material**: Input topics or upload content to create AI-generated learning materials.
-- **Payments**: Subscribe to premium features using Stripe.
- - **Payments**: (disabled in this build)
-- **Real-Time Updates**: Enjoy fast, responsive features powered by serverless functions.
+3. **Run the dev server**
 
----
+   ```bash
+   pnpm dev
+   ```
 
-## 🤝 Contribution
+4. **Explore core flows**
 
--We welcome contributions to make the AI Study Material Generator even better! Follow these steps to contribute:
+   - `/dashboard` – view locally stored courses and AI generated outlines.
+   - `/create` – generate new material with fallback storage when APIs are unavailable.
+   - `/subscribe` – walk through the end-to-end Stripe subscription sample described below.
 
-1. **Fork the Project**
-   
-    Create a copy of the repository by forking it.
-    Create a Feature Branch
-    ```
-    git checkout -b feature/AmazingFeature
+## Stripe subscription sandbox
 
-2. **Commit Your Changes**
-   
-    ```
-    git commit -m 'Add some AmazingFeature'
-    ```
+The `/subscribe` route implements the full sequence from the Stripe docs:
 
-3. **Push to the Branch**
-   
-    ```
-    git push origin feature/AmazingFeature
+1. **Register a customer** – collect email, name, and address, call `POST /api/stripe/create-customer`, and cache the returned customer ID locally (or persist it via your own DB).
+2. **Create a Checkout Session** – trigger `POST /api/stripe/create-checkout-session` with the stored customer and price ID. The response includes the client secret for `stripe.initCheckout`.
+3. **Mount Elements** – use the returned Checkout instance to mount the Payment Element and Address Element into the page, preview line items, and display totals.
+4. **Confirm payment** – call `actions.confirm()` to complete the subscription. The UI surfaces success or validation errors and stores the resulting subscription ID.
+5. **Cancel** – `POST /api/stripe/cancel-subscription` uses `stripe.subscriptions.del` so you can test downgrade flows.
 
-4. **Open a Pull Request**
+### Webhooks
 
-    Submit your changes through a pull request for review.
+- Local development: run `stripe listen --forward-to localhost:3000/api/stripe/webhook` and watch events propagate through the `stripeStore` in-memory cache.
+- Production: point a Stripe webhook endpoint at `/api/stripe/webhook` and replace the temporary Map store with your database of choice.
 
----
+## Tech Stack
 
-## 📜 License
-Distributed under the MIT License. See LICENSE for more details.
+- **Framework**: Next.js App Router, React 18
+- **Styling**: Tailwind CSS, custom UI components
+- **Auth**: Clerk
+- **AI**: Google Generative AI (Gemini), OpenAI Chat API
+- **Payments**: Stripe (custom Checkout + Elements demo)
+- **Background jobs**: Inngest (local stubbed)
+- **Data**: LocalStorage fallbacks, optional Neon/Postgres via Drizzle ORM
 
-## 📞 Contact
-Project Maintainer:
+## Development tips
 
-- Aditya Kumar Singh
-- GitHub: aviralawasthi2005
+- Use the provided `configs/stripeStore.js` as a temporary cache; swap it with a persistent store when rolling out real subscriptions.
+- All Stripe API helpers live under `app/api/stripe/*`. Each handler asserts the presence of `STRIPE_SECRET_KEY` before making API calls.
+- The `.env.example` file documents every variable the app reads—keep real secrets in `.env.local`.
+- When testing webhooks alongside the dev server, keep two terminals running: one for `pnpm dev` and one for `stripe listen`.
 
----
-Feel free to reach out with any questions, ideas, or feedback!
-=======
-# EdTech HackwithUttarPrad 
->>>>>>> f7a0974f1e09c7bd9e542f7eba3a619cc11b6ea8
+## Contributing
+
+Issues and PRs are welcome. Please describe the feature or bugfix, include tests when practical, and avoid committing real API keys or personal data.
+
+## License
+
+MIT – see `LICENSE` for details.

@@ -4,6 +4,13 @@ import React from "react";
 import { ArrowRight, Github } from "lucide-react";
 // removed image/logo usage per request
 import Link from "next/link";
+import {
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
 
 const LandingPage = () => {
   return (
@@ -14,6 +21,21 @@ const LandingPage = () => {
           <span className="text-xl md:text-2xl font-bold">PrepGen</span>
         </div>
         <div className="flex items-center space-x-2 md:space-x-4">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="px-3 md:px-4 py-2 text-gray-700 hover:text-blue-600 rounded-lg border border-gray-200 text-sm md:text-base">
+                Sign in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="px-3 md:px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 text-sm md:text-base">
+                Sign up
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
           <a
             href="https://github.com/aviralawasthi2005"
             target="_blank"
@@ -74,7 +96,7 @@ const LandingPage = () => {
                 </div>
               </h1>
               <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-xl px-4">
-                Your AI Exam Prep Companion: Effortless Study Material at Your Fingertips
+                PrepGen — Where Preparation Meets Innovation.
               </p>
               <div className="flex justify-center mt-6 md:mt-8">
                 <Link href="/dashboard">
