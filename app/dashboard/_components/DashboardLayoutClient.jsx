@@ -5,6 +5,7 @@ import DashboardHeader from "./DashboardHeader";
 import { CourseCountContext } from "../../_context/CourseCountContext";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import ClientClerkProvider from "@/app/_components/ClientClerkProvider";
 
 function DashboardLayoutClient({ children }) {
   const [totalCourse, setTotalCourse] = useState(0);
@@ -31,6 +32,7 @@ function DashboardLayoutClient({ children }) {
   }
 
   return (
+    <ClientClerkProvider>
     <CourseCountContext.Provider value={{ totalCourse, setTotalCourse }}>
       <div>
         <div className="md:w-64 hidden md:block fixed">
@@ -42,6 +44,7 @@ function DashboardLayoutClient({ children }) {
         </div>
       </div>
     </CourseCountContext.Provider>
+    </ClientClerkProvider>
   );
 }
 

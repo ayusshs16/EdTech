@@ -150,6 +150,10 @@ import React, { useEffect, useState } from "react";
 
 function ViewNotes() {
   const { courseId } = useParams();
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadContent, setUploadContent] = useState("");
+  const [summary, setSummary] = useState(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const [notes, setNotes] = useState([]);
   const [stepCount, setStepCount] = useState(0);
   const router = useRouter();
@@ -175,6 +179,53 @@ function ViewNotes() {
       setNotes(parsedNotes || []);
     } catch (error) {
       console.error("Failed to fetch notes:", error);
+    }
+  };
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    // Only handle text files for now (.txt, .md)
+    if (file.type.startsWith("text/") || /\.md$|\.txt$/i.test(file.name)) {
+      const text = await file.text();
+      setUploadContent(text);
+      setUploadTitle(file.name.replace(/\.(md|txt)$/i, ""));
+      setSummary(null);
+    } else {
+      alert("Unsupported file type. Please upload a .txt or .md file for now.");
+    }
+  };
+
+  const handleSummarize = async ({ save = false } = {}) => {
+    if (!uploadContent || uploadContent.trim().length === 0) {
+      alert("Please paste notes or upload a text/markdown file first.");
+      return;
+    }
+
+    try {
+      setUploadLoading(true);
+      const resp = await axios.post("/api/notes/upload", {
+        courseId,
+        title: uploadTitle || `Manual note ${new Date().toISOString()}`,
+        content: uploadContent,
+        save,
+      });
+
+      if (resp?.data?.error) {
+        alert(`Error: ${resp.data.error}`);
+      } else {
+        setSummary(resp.data?.summary ?? null);
+        // If saved, refresh notes list
+        if (save) {
+          await GetNotes();
+          setUploadContent("");
+          setUploadTitle("");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to summarize notes. See console for details.");
+    } finally {
+      setUploadLoading(false);
     }
   };
 
@@ -208,6 +259,58 @@ function ViewNotes() {
 
   return notes.length > 0 ? (
     <div>
+      <div className="mb-8 p-4 border rounded-lg bg-white">
+        <h3 className="text-lg font-semibold mb-2">Upload / Paste Notes</h3>
+        <input
+          type="text"
+          placeholder="Title (optional)"
+          value={uploadTitle}
+          onChange={(e) => setUploadTitle(e.target.value)}
+          className="w-full mb-2 p-2 border rounded"
+        />
+        <div className="flex gap-2 items-center mb-2">
+          <input
+            id="file-input"
+            type="file"
+            accept=".txt,.md,text/*"
+            onChange={(e) => handleFile(e.target.files?.[0])}
+          />
+          <Button variant="outline" size="sm" onClick={() => { setUploadContent(''); setSummary(null); setUploadTitle(''); }}>
+            Clear
+          </Button>
+        </div>
+        <textarea
+          rows={6}
+          placeholder="Or paste notes here..."
+          value={uploadContent}
+          onChange={(e) => setUploadContent(e.target.value)}
+          className="w-full p-2 border rounded mb-2"
+        />
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => handleSummarize({ save: false })} disabled={uploadLoading}>
+            {uploadLoading ? "Summarizing…" : "Summarize (preview)"}
+          </Button>
+          <Button size="sm" onClick={() => handleSummarize({ save: true })} disabled={uploadLoading}>
+            {uploadLoading ? "Saving…" : "Summarize & Save"}
+          </Button>
+        </div>
+
+        {summary && (
+          <div className="mt-4 p-3 bg-gray-50 border rounded">
+            <h4 className="font-semibold">AI Summary</h4>
+            <div className="mt-2">
+              <p className="mb-2">{summary.summary}</p>
+              {Array.isArray(summary.bullets) && (
+                <ul className="list-disc pl-6">
+                  {summary.bullets.map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
       <div className="flex gap-5 items-center">
         <Button
           variant="outline"
