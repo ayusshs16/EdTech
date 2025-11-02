@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import GenZAnimation from "@/components/ui/genz-animation";
+import TopicDetail from "@/components/ui/topic-detail";
 
 function CreateCourse() {
   const [step, setStep] = useState(0);
@@ -17,6 +19,9 @@ function CreateCourse() {
   const router = useRouter();
   const [generatedTopics, setGeneratedTopics] = useState([]);
   const [genLoading, setGenLoading] = useState(false);
+  const [topicDetails, setTopicDetails] = useState({});
+  const [activeDetailTopic, setActiveDetailTopic] = useState(null);
+  const [newTopicText, setNewTopicText] = useState("");
   const handleUserInput = (fieldName, fieldValue) => {
     setFormData((prev) => ({
       ...prev,
@@ -133,6 +138,53 @@ function CreateCourse() {
     setGeneratedTopics((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const addNewTopic = () => {
+    const text = String(newTopicText || "").trim();
+    if (!text) return toast.error("Enter a topic title first");
+    setGeneratedTopics((prev) => [text, ...prev]);
+    setNewTopicText("");
+    toast.success("Added topic");
+  };
+
+  const fetchTopicDetail = async (topic) => {
+    setActiveDetailTopic(topic);
+    // If already have details, just open
+    if (topicDetails[topic]) return;
+
+    // Simulate a small generation step; replace this with real API call if needed
+    try {
+      // mark placeholder
+      setTopicDetails((p) => ({ ...p, [topic]: null }));
+      // small delay to simulate network/AI
+      await new Promise((r) => setTimeout(r, 700));
+
+      const difficulty = (formData.difficultyLevel || "Moderate");
+      const bullets = [
+        `${topic} - core concept`,
+        `${topic} - example and practice`,
+        `${topic} - common pitfalls`,
+      ];
+      if (difficulty === "Hard") bullets.push(`${topic} - advanced topics`);
+
+      const detail = {
+        summary: `A quick overview of ${topic}. This short summary helps you understand what to expect from this topic (difficulty: ${difficulty}).`,
+        bullets,
+        estimatedDuration: difficulty === "Easy" ? "15-30 mins" : difficulty === "Moderate" ? "30-60 mins" : "1-2 hrs",
+      };
+      setTopicDetails((p) => ({ ...p, [topic]: detail }));
+    } catch (e) {
+      setTopicDetails((p) => ({ ...p }));
+      toast.error("Failed to generate topic details");
+    }
+  };
+
+  const useTopic = (topic) => {
+    // Put the selected topic into formData.topic so generate uses it
+    handleUserInput("topic", topic);
+    setActiveDetailTopic(null);
+    toast.success(`Using topic: ${topic}`);
+  };
+
   return (
     <div className="flex flex-col items-center p-5 md:px-24 lg:px-36 mt-20">
       <h2 className="font-bold text-4xl text-primary ">
@@ -163,23 +215,49 @@ function CreateCourse() {
               <p className="text-sm text-gray-500">Use AI to suggest topic titles.</p>
             </div>
 
+            {/* Create new topic UI */}
+            <div className="mt-4 w-full">
+              <h3 className="font-semibold">Create or add topics</h3>
+              <div className="flex gap-2 mt-3">
+                <input
+                  value={newTopicText}
+                  onChange={(e) => setNewTopicText(e.target.value)}
+                  placeholder="Type a new topic"
+                  className="flex-1 rounded-md border px-3 py-2"
+                />
+                <Button onClick={addNewTopic}>Create New</Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">After adding, click "Generate" on any topic to view details.</p>
+            </div>
+
             {generatedTopics && generatedTopics.length > 0 && (
               <div className="mt-4 w-full">
                 <h3 className="font-semibold">Generated topics</h3>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-col gap-2 mt-2">
                   {generatedTopics.map((t, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 rounded-full bg-sky-100 text-sky-800 px-3 py-1"
+                      className="flex items-center justify-between gap-4 rounded-md bg-sky-50 text-sky-800 px-3 py-2"
                     >
-                      <span className="text-sm">{t}</span>
-                      <button
-                        onClick={() => removeGeneratedTopic(i)}
-                        className="ml-2 text-red-600 font-bold"
-                        aria-label={`Remove topic ${t}`}
-                      >
-                        ×
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium">{t}</span>
+                        <small className="text-xs text-gray-500">— click to inspect</small>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => fetchTopicDetail(t)}>
+                          Generate
+                        </Button>
+                        <Button size="sm" onClick={() => setActiveDetailTopic(t)}>
+                          Details
+                        </Button>
+                        <button
+                          onClick={() => removeGeneratedTopic(i)}
+                          className="ml-2 text-red-600 font-bold"
+                          aria-label={`Remove topic ${t}`}
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -203,6 +281,14 @@ function CreateCourse() {
           <Button onClick={GenerateCourseOutline}>Generate</Button>
         )}
       </div>
+      {activeDetailTopic && (
+        <TopicDetail
+          topic={activeDetailTopic}
+          detail={topicDetails[activeDetailTopic]}
+          onClose={() => setActiveDetailTopic(null)}
+          onUse={useTopic}
+        />
+      )}
     </div>
   );
 }
